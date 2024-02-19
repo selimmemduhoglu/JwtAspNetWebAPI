@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace JwtAuthAspNet7WebAPI.Core.Services
@@ -62,10 +63,13 @@ namespace JwtAuthAspNet7WebAPI.Core.Services
 
             var token = GenerateNewJsonWebToken(authClaims);
 
+            var refreshToken = GenerateRefreshToken();
+
             return new AuthServiceResponseDto()
             {
                 IsSucceed = true,
-                Message = token
+                Message = token,
+                RereshToken = refreshToken,
             };
         }
 
@@ -119,7 +123,7 @@ namespace JwtAuthAspNet7WebAPI.Core.Services
                     IsSucceed = false,
                     Message = "UserName Already Exists"
                 };
-            
+
 
             ApplicationUser newUser = new ApplicationUser()
             {
@@ -172,7 +176,7 @@ namespace JwtAuthAspNet7WebAPI.Core.Services
             await _roleManager.CreateAsync(new IdentityRole(StaticUserRoles.USER));
             await _roleManager.CreateAsync(new IdentityRole(StaticUserRoles.ADMIN));
             await _roleManager.CreateAsync(new IdentityRole(StaticUserRoles.OWNER));
-          
+
             return new AuthServiceResponseDto()
             {
                 IsSucceed = true,
@@ -195,6 +199,15 @@ namespace JwtAuthAspNet7WebAPI.Core.Services
             string token = new JwtSecurityTokenHandler().WriteToken(tokenObject);
 
             return token;
+        }
+        private string GenerateRefreshToken()
+        {
+            byte[] byteArray = new byte[32];
+
+            using RandomNumberGenerator random = RandomNumberGenerator.Create();
+            random.GetBytes(byteArray);
+
+            return Convert.ToBase64String(byteArray);
         }
     }
 }
